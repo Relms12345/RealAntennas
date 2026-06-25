@@ -8,10 +8,6 @@ on:
   workflow_dispatch:
 
 jobs:
-  check-secret:
-    uses: KSP-RO/BuildTools/.github/workflows/check-secret.yml@master
-    secrets:
-      KSP_ZIP_PASSWORD: ${{ secrets.KSP_ZIP_PASSWORD }}
   validate-cfg-files:
     runs-on: ubuntu-22.04
     steps:
@@ -23,20 +19,21 @@ jobs:
         uses: KSP-CKAN/KSPMMCfgParser@master
   build:
     runs-on: ubuntu-22.04
-    needs: [check-secret]
-    if: needs.check-secret.outputs.has-password == 'true'
     steps:
       - name: Checkout
         uses: actions/checkout@v2
         with:
           fetch-depth: 100
 
-      - name: Download required assemblies
+      - name: Extract KSP assemblies
         id: download-assemblies
-        uses: KSP-RO/BuildTools/download-assemblies@master
-        with:
-          KSP_ZIP_PASSWORD: ${{ secrets.KSP_ZIP_PASSWORD }}
-          
+        run: |
+          KSP_DLL_PATH="/opt/ksp/assembly"
+          echo "ksp-dll-path=${KSP_DLL_PATH}" >> $GITHUB_OUTPUT
+          mkdir -p "${KSP_DLL_PATH}"
+          unzip -q "${GITHUB_WORKSPACE}/ksp.zip" -d "/tmp/ksp_extract"
+          mv /tmp/ksp_extract/KSP_x64_Data/Managed/* "${KSP_DLL_PATH}/"
+          rm -rf /tmp/ksp_extract
       # Install .NET SDKs
       - name: Setup .NET Core 3.1
         uses: actions/setup-dotnet@v1
@@ -46,6 +43,19 @@ jobs:
         uses: actions/setup-dotnet@v1
         with:
           dotnet-version: 5.0.x
+
+      - name: Setup CKAN
+        uses: KSPModdingLibs/KSPBuildTools/.github/actions/setup-ckan@2135acc95e3a2ecc021dbedfdb0f41066b066b4e
+
+      - name: Install mod dependencies via CKAN
+        uses: KSPModdingLibs/KSPBuildTools/.github/actions/install-dependencies@2135acc95e3a2ecc021dbedfdb0f41066b066b4e
+        with:
+          dependency-identifiers: "ClickThroughBlocker KSPCommunityFixes"
+
+      - name: Copy mod DLLs to assembly path
+        run: |
+          find "$KSP_ROOT/GameData" -name "ClickThroughBlocker.dll" -exec cp {} "${{ steps.download-assemblies.outputs.ksp-dll-path }}/" \;
+          find "$KSP_ROOT/GameData" -name "KSPCommunityFixes.dll" -exec cp {} "${{ steps.download-assemblies.outputs.ksp-dll-path }}/" \;
 
       - name: Update AssemblyInfo
         uses: KSP-RO/BuildTools/update-assembly-info@master

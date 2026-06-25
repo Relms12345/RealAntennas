@@ -23,11 +23,13 @@ jobs:
           fetch-depth: 0
           ref: ${{ env.tagged_branch }}
 
-      - name: Download required assemblies
+      - name: Extract KSP assemblies
         id: download-assemblies
-        uses: KSP-RO/BuildTools/download-assemblies@master
-        with:
-          KSP_ZIP_PASSWORD: ${{ secrets.KSP_ZIP_PASSWORD }}
+        run: |
+          KSP_DLL_PATH="/opt/ksp/assembly"
+          echo "ksp-dll-path=${KSP_DLL_PATH}" >> $GITHUB_OUTPUT
+          mkdir -p "${KSP_DLL_PATH}"
+          unzip -q "${GITHUB_WORKSPACE}/ksp.zip" -d "${KSP_DLL_PATH}"
           
       # Install .NET SDKs
       - name: Setup .NET Core 3.1
