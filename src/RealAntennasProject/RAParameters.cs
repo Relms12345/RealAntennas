@@ -25,7 +25,7 @@
         public float MaxMinDirectionalDistance = 1000;
 
         [GameParameters.CustomIntParameterUI("Maximum Tech Level", displayFormat = "N0", gameMode = GameParameters.GameMode.SANDBOX | GameParameters.GameMode.SANDBOX, maxValue = 20, minValue = 1, stepSize = 1)]
-        public int MaxTechLevel = 10;
+        public int MaxTechLevel = 15;
 
         [GameParameters.CustomFloatParameterUI("Rescale transmission rate for stock science", toolTip = "Multiplier to transmission rate for stock science.  Available for balancing purposes: turn it down if science transmits too quickly, or up if too slowly.", minValue = 0.00001f, maxValue = 0.01f, stepCount = 10000, displayFormat = "N5")]
         public float StockRateModifier = 0.01f;
